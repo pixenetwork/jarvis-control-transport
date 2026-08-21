@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "commandId": "jarvis-remote-phase0-v2-20260821T083137Z-156c8cb729b7",
+  "targetHost": "DESKTOP-7CM41S6",
+  "createdAt": "2026-08-21T08:31:37.000Z",
+  "expiresAt": "2026-08-21T08:41:37.000Z",
+  "nonce": "c7caf78c2d804a0db12212bd6bda7cf7",
+  "expectedMainSha": "178e38a12af9110019253c4337799714a3222f83",
+  "origin": "chatgpt-owner-control",
+  "receiptPolicy": "execution-only",
+  "hostOps": {
+    "taskId": "jarvis-remote-phase0-v2-20260821T083137Z-156c8cb729b7",
+    "action": "host.system.health",
+    "command": null,
+    "operation": null,
+    "target": null,
+    "workingDirectory": "C:\\Users\\Administrator\\ai-orchestrator",
+    "timeoutMs": 120000,
+    "riskClassification": "low",
+    "approvalStatus": "not-required",
+    "originWorker": "jarvis-core",
+    "timestamp": "2026-08-21T08:31:37.000Z",
+    "dryRun": true,
+    "payload": {}
+  }
+}
