@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "commandId": "jarvis-remote-20260821-phase0-0329-9c6f42e1",
+  "targetHost": "DESKTOP-7CM41S6",
+  "createdAt": "2026-08-21T08:29:00.000Z",
+  "expiresAt": "2026-08-21T08:43:00.000Z",
+  "nonce": "9c6f42e1bd9071a8462e73c5f8014ad9",
+  "expectedMainSha": "178e38a12af9110019253c4337799714a3222f83",
+  "origin": "chatgpt-owner-control",
+  "receiptPolicy": "execution-postcheck",
+  "hostOps": {
+    "taskId": "task-phase0-remote-20260821-9c6f42e1",
+    "action": "host.system.health",
+    "workingDirectory": "C:\\Users\\Administrator\\ai-orchestrator",
+    "originWorker": "jarvis-remote-control",
+    "timestamp": "2026-08-21T08:29:00.000Z"
+  }
+}
