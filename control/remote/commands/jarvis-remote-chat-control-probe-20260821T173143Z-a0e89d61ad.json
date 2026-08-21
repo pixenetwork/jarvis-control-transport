@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "commandId": "jarvis-remote-chat-control-probe-20260821T173143Z-a0e89d61ad",
+  "targetHost": "DESKTOP-7CM41S6",
+  "createdAt": "2026-08-21T17:31:43Z",
+  "expiresAt": "2026-08-21T17:41:43Z",
+  "nonce": "d88a6b96e352c054cec623c7a2b4eff0",
+  "expectedMainSha": "178e38a12af9110019253c4337799714a3222f83",
+  "origin": "chatgpt-owner-control",
+  "receiptPolicy": "execution-only",
+  "hostOps": {
+    "taskId": "jarvis-remote-chat-control-probe-20260821T173143Z-a0e89d61ad",
+    "action": "host.system.health",
+    "command": null,
+    "operation": null,
+    "target": null,
+    "workingDirectory": "C:\\Users\\Administrator\\ai-orchestrator",
+    "timeoutMs": 120000,
+    "riskClassification": "low",
+    "approvalStatus": "not-required",
+    "originWorker": "jarvis-core",
+    "timestamp": "2026-08-21T17:31:43Z",
+    "dryRun": true,
+    "payload": {}
+  }
+}
