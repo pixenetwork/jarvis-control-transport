@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "commandId": "jarvis-remote-windows-mcp-proof-20260826T010900Z",
+  "targetHost": "DESKTOP-7CM41S6",
+  "createdAt": "2026-08-26T01:09:00.000Z",
+  "expiresAt": "2026-08-26T01:21:00.000Z",
+  "nonce": "windows-mcp-proof-20260826T010900Z",
+  "expectedMainSha": "d430d61ab5baf02f596c99bc3446df498281c1f4",
+  "origin": "chatgpt-owner-control",
+  "receiptPolicy": "execution-postcheck-idempotency",
+  "hostOps": {
+    "taskId": "jarvis-remote-windows-mcp-proof-20260826T010900Z",
+    "action": "host.windows-mcp.call",
+    "command": null,
+    "operation": null,
+    "target": "PowerShell",
+    "workingDirectory": "C:\\Users\\Administrator\\ai-orchestrator",
+    "timeoutMs": 120000,
+    "riskClassification": "medium",
+    "approvalStatus": "not-required",
+    "originWorker": "jarvis-core",
+    "timestamp": "2026-08-26T01:09:00.000Z",
+    "dryRun": false,
+    "payload": {
+      "arguments": {
+        "command": "Get-ComputerInfo"
+      }
+    }
+  }
+}
