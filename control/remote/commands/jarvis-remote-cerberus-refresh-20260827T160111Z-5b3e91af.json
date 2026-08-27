@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "commandId": "jarvis-remote-cerberus-refresh-20260827T160111Z-5b3e91af",
+  "targetHost": "DESKTOP-7CM41S6",
+  "createdAt": "2026-08-27T16:01:11.000Z",
+  "expiresAt": "2026-08-27T16:15:11.000Z",
+  "nonce": "cerberus-refresh-5b3e91af",
+  "expectedMainSha": "44a748bdd6804d5f9af7ceb919337ce870018da8",
+  "origin": "chatgpt-owner-control",
+  "receiptPolicy": "execution-only",
+  "hostOps": {
+    "taskId": "jarvis-remote-cerberus-refresh-20260827T160111Z-5b3e91af",
+    "action": "host.cerberus.refresh",
+    "workingDirectory": "C:\\Users\\Administrator\\ai-orchestrator",
+    "timeoutMs": 180000,
+    "originWorker": "jarvis-core",
+    "timestamp": "2026-08-27T16:01:11.000Z",
+    "dryRun": false
+  }
+}
