@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "commandId": "jarvis-remote-host-health-20260829T160600Z-athena-v3proof",
+  "targetHost": "DESKTOP-7CM41S6",
+  "createdAt": "2026-08-29T16:06:00.000Z",
+  "expiresAt": "2026-08-29T16:26:00.000Z",
+  "nonce": "host-health-athena-v3proof-160600",
+  "expectedMainSha": "9db8bab2c1c44508370920c66d525c8784dbbaca",
+  "origin": "chatgpt-owner-control",
+  "receiptPolicy": "execution-postcheck-idempotency",
+  "hostOps": {
+    "taskId": "jarvis-remote-host-health-20260829T160600Z-athena-v3proof",
+    "action": "host.system.health",
+    "command": null,
+    "operation": null,
+    "target": null,
+    "workingDirectory": "C:\\Users\\Administrator\\ai-orchestrator",
+    "timeoutMs": 120000,
+    "riskClassification": "low",
+    "approvalStatus": "not-required",
+    "originWorker": "jarvis-core",
+    "timestamp": "2026-08-29T16:06:00.000Z",
+    "dryRun": false,
+    "payload": {}
+  }
+}
