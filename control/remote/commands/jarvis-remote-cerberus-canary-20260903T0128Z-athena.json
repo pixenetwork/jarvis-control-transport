@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "commandId": "jarvis-remote-cerberus-canary-20260903T0128Z-athena",
+  "targetHost": "DESKTOP-7CM41S6",
+  "createdAt": "2026-09-03T01:28:00.000Z",
+  "expiresAt": "2026-09-03T01:41:00.000Z",
+  "nonce": "cerberus-canary-athena-20260903T0128Z",
+  "expectedMainSha": "05726c4c323b174f3100751e7164e0635ff467d5",
+  "origin": "chatgpt-owner-control",
+  "receiptPolicy": "execution-only",
+  "hostOps": {
+    "taskId": "jarvis-remote-cerberus-canary-20260903T0128Z-athena",
+    "action": "host.cerberus.refresh",
+    "workingDirectory": "C:\\Users\\Administrator\\ai-orchestrator",
+    "originWorker": "jarvis-remote-control",
+    "timestamp": "2026-09-03T01:28:00.000Z",
+    "dryRun": false
+  }
+}
