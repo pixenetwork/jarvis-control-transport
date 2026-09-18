@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/pixenetwork/jarvis-control-transport/receipts/schema/receipt-journal-entry.schema.json",
+  "title": "Jarvis Receipt Journal Entry",
+  "description": "Sanitized, public receipt metadata for a bounded Jarvis remote-control command envelope. This schema enumerates the ONLY fields that may ever appear in a public receipt-journal entry. Commands, credentials, tokens, environment data, Host Ops internals, and any other private artifact are strictly forbidden. The authoritative raw receipt lives privately in pixenetwork/ai-orchestrator and is referenced here only by a one-way hash (rawHashRef).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "phase", "nonce", "rawHashRef", "ttlSeconds", "outcome"],
+  "properties": {
+    "schemaVersion": {
+      "description": "Format version of this receipt-journal entry. Structural metadata only; carries no receipt content.",
+      "type": "integer",
+      "enum": [1]
+    },
+    "phase": {
+      "description": "Lifecycle phase of the command envelope that this receipt attests. Enumerated; never free-form text.",
+      "type": "string",
+      "enum": [
+        "precheck",
+        "dispatch",
+        "execution-postcheck",
+        "reconcile",
+        "expiry"
+      ]
+    },
+    "nonce": {
+      "description": "The 128-bit envelope nonce, expressed as exactly 32 lowercase hexadecimal characters. Matches the nonce field of the referenced command envelope. Non-secret, single-use anti-replay value.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+    },
+    "rawHashRef": {
+      "description": "One-way reference to the authoritative private raw receipt. Format: 'sha256:' followed by exactly 64 lowercase hexadecimal characters. This is a pointer only; the raw receipt content itself is never published here.",
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "ttlSeconds": {
+      "description": "Time-to-live of the command envelope in whole seconds, as originally issued. Bounded positive integer; conveys validity window duration only, not absolute timestamps or host clock data.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 86400
+    },
+    "outcome": {
+      "description": "Terminal outcome recorded for the referenced phase. Enumerated; never free-form text.",
+      "type": "string",
+      "enum": [
+        "success",
+        "failure",
+        "expired",
+        "rejected",
+        "timeout"
+      ]
+    }
+  }
+}
