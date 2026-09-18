@@ -1,0 +1,78 @@
+# Canonical branch ruleset requirement (repository-admin action)
+
+Tracks: [#24](https://github.com/pixenetwork/jarvis-control-transport/issues/24) — "P1 admin gate: protect canonical v2 and remove unconditional bypass".
+
+This document is the precise, checkable specification for the repository-level
+ruleset change. It cannot be applied from a pull request: GitHub repository
+rulesets are an admin-only, org/repo settings-level resource, not something a
+committed file can change. A repository owner/admin with access to
+**Settings → Rules → Rulesets** (or the equivalent `PATCH
+/repos/{owner}/{repo}/rulesets/{ruleset_id}` / `POST
+.../rulesets` admin API call) must perform this change directly.
+
+## Known-bad current state (evidence, recorded 2026-09-03 audit)
+
+- Intended canonical control ref: `refs/heads/jarvis-remote-control-v2`.
+- `jarvis-remote-control-v2` is protected only at the classic branch-protection
+  endpoint; it is **not** covered by any repository ruleset.
+- The only active repository ruleset is `21129233`
+  (`jarvis-remote-control-v1-writer-gate`), and it targets
+  `refs/heads/jarvis-remote-control-v1`, not v2.
+- Ruleset `21129233` grants user `pixenetwork` `bypass_mode: always` —
+  an unconditional, unaudited bypass of every rule it enforces.
+- `jarvis-remote-control-v3`, `jarvis-remote-control-v4`, and assorted
+  `probe/*` / `control/*` / `temp-*` branches are unprotected by any
+  ruleset and must remain non-authoritative (see `README.md`).
+
+## Required end state
+
+1. **Retarget/create the canonical ruleset** so it applies to
+   `refs/heads/jarvis-remote-control-v2` (by `ref_name.include`, not branch
+   name pattern-matching that could also catch v1/v3/v4).
+2. **Preserve or add these rules** on that ruleset, scoped to v2:
+   - `deletion` — branch cannot be deleted.
+   - `non_fast_forward` — no force-push / history rewrite.
+   - `update` restricted to fast-forward, non-destructive appends only.
+   - `required_signatures` (or equivalent identity/signing safeguard), if the
+     repository's write path supports it.
+   - `pull_request` / required-review rule for any writer other than the
+     bounded command-envelope append path, if applicable.
+3. **Remove the unconditional bypass.** No actor may hold
+   `bypass_mode: always` on the canonical (v2) ruleset. If an emergency
+   break-glass path is operationally required, it must be:
+   - scoped to a named, individually accountable actor or team (never "always"
+     for a broad principal),
+   - logged/audited (the bypass event itself must be observable after the
+     fact), and
+   - narrower than full rule bypass where GitHub's ruleset model allows
+     per-rule bypass instead of all-rule bypass.
+4. **Confirm v1/v3/v4 and probe/control/temp branches stay non-authoritative**:
+   they may keep their own (or no) ruleset for provenance, but nothing in
+   this repository's automation or downstream consumers may treat them as
+   the control branch. (Enforced today at the source/consumer level by
+   the "Canonical control branch" section of `README.md`.)
+5. **Record the result** in this file (or a follow-up commit to it) once
+   applied:
+   - exact `jarvis-remote-control-v2` head SHA at the time of the change,
+   - the ruleset ID(s) now targeting v2,
+   - confirmation (e.g. `gh api repos/pixenetwork/jarvis-control-transport/rulesets`)
+     that no ruleset targeting the canonical branch grants an `always`
+     bypass actor.
+
+## Verification (run after the admin change, from an account with repo read access)
+
+```sh
+# List rulesets and confirm one targets refs/heads/jarvis-remote-control-v2
+gh api repos/pixenetwork/jarvis-control-transport/rulesets
+
+# Inspect that ruleset's target ref and bypass_actors; bypass_actors must not
+# contain an entry with bypass_mode "always"
+gh api repos/pixenetwork/jarvis-control-transport/rulesets/<ruleset_id>
+
+# Record the exact v2 head at time of verification
+gh api repos/pixenetwork/jarvis-control-transport/git/ref/heads/jarvis-remote-control-v2
+```
+
+Until this file is updated with recorded evidence from the steps above, this
+transport must **not** be treated as production-ready, per issue #24 and the
+source-level fail-closed policy in `README.md` / PR #23.
