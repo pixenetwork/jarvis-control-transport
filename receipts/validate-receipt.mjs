@@ -92,16 +92,19 @@ function isPlainObject(value) {
   }
 }
 
-function hasSafeOwnDataProperties(value) {
+function snapshotSafeOwnDataProperties(value) {
   try {
-    if (Object.getOwnPropertySymbols(value).length) return false;
-    for (const key of Object.getOwnPropertyNames(value)) {
+    if (Object.getOwnPropertySymbols(value).length) return null;
+    const snapshot = Object.create(null);
+    const keys = Object.getOwnPropertyNames(value);
+    for (const key of keys) {
       const descriptor = Object.getOwnPropertyDescriptor(value, key);
-      if (!descriptor || !Object.hasOwn(descriptor, "value")) return false;
+      if (!descriptor || !Object.hasOwn(descriptor, "value")) return null;
+      snapshot[key] = descriptor.value;
     }
-    return true;
+    return { snapshot, keys };
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -154,39 +157,41 @@ export function validateReceipt(input) {
   if (!isPlainObject(input)) {
     return { valid: false, errors: ["entry must be a plain JSON object"], entry: null };
   }
-  if (!hasSafeOwnDataProperties(input)) {
+  const safe = snapshotSafeOwnDataProperties(input);
+  if (!safe) {
     return { valid: false, errors: ["entry must contain only own JSON data properties"], entry: null };
   }
+  const safeInput = safe.snapshot;
 
   // 1. Structural allow-list: reject any key that is not explicitly permitted.
-  for (const key of Object.keys(input)) {
+  for (const key of safe.keys) {
     if (!ALLOWED_KEYS.includes(key)) {
       errors.push(`unexpected field '${key}' is not part of the sanitized receipt contract`);
     }
   }
 
   // 2. Presence + per-field format checks.
-  if (input.schemaVersion !== SCHEMA_VERSION) {
+  if (safeInput.schemaVersion !== SCHEMA_VERSION) {
     errors.push(`schemaVersion must be the integer ${SCHEMA_VERSION}`);
   }
-  if (!ALLOWED_PHASES.includes(input.phase)) {
+  if (!ALLOWED_PHASES.includes(safeInput.phase)) {
     errors.push(`phase must be one of: ${ALLOWED_PHASES.join(", ")}`);
   }
-  if (typeof input.nonce !== "string" || !NONCE_PATTERN.test(input.nonce)) {
+  if (typeof safeInput.nonce !== "string" || !NONCE_PATTERN.test(safeInput.nonce)) {
     errors.push("nonce must be exactly 32 lowercase hex characters");
   }
-  if (typeof input.rawHashRef !== "string" || !RAW_HASH_REF_PATTERN.test(input.rawHashRef)) {
+  if (typeof safeInput.rawHashRef !== "string" || !RAW_HASH_REF_PATTERN.test(safeInput.rawHashRef)) {
     errors.push("rawHashRef must match 'sha256:' followed by 64 lowercase hex characters");
   }
   if (
-    typeof input.ttlSeconds !== "number" ||
-    !Number.isInteger(input.ttlSeconds) ||
-    input.ttlSeconds < TTL_MIN_SECONDS ||
-    input.ttlSeconds > TTL_MAX_SECONDS
+    typeof safeInput.ttlSeconds !== "number" ||
+    !Number.isInteger(safeInput.ttlSeconds) ||
+    safeInput.ttlSeconds < TTL_MIN_SECONDS ||
+    safeInput.ttlSeconds > TTL_MAX_SECONDS
   ) {
     errors.push(`ttlSeconds must be an integer between ${TTL_MIN_SECONDS} and ${TTL_MAX_SECONDS}`);
   }
-  if (!ALLOWED_OUTCOMES.includes(input.outcome)) {
+  if (!ALLOWED_OUTCOMES.includes(safeInput.outcome)) {
     errors.push(`outcome must be one of: ${ALLOWED_OUTCOMES.join(", ")}`);
   }
 
@@ -194,7 +199,7 @@ export function validateReceipt(input) {
   // Hostile nested objects must fail closed rather than throwing from getters,
   // proxies, or cyclic/non-JSON structures.
   try {
-    for (const violation of scanForbidden(input)) {
+    for (const violation of scanForbidden(safeInput)) {
       errors.push(violation.message);
     }
   } catch {
@@ -209,12 +214,12 @@ export function validateReceipt(input) {
     // untrusted/rejected content back to a caller.
     entry: valid
       ? {
-          schemaVersion: input.schemaVersion,
-          phase: input.phase,
-          nonce: input.nonce,
-          rawHashRef: input.rawHashRef,
-          ttlSeconds: input.ttlSeconds,
-          outcome: input.outcome,
+          schemaVersion: safeInput.schemaVersion,
+          phase: safeInput.phase,
+          nonce: safeInput.nonce,
+          rawHashRef: safeInput.rawHashRef,
+          ttlSeconds: safeInput.ttlSeconds,
+          outcome: safeInput.outcome,
         }
       : null,
   };
