@@ -83,7 +83,26 @@ export const FORBIDDEN_SIGNATURES = Object.freeze([
 ]);
 
 function isPlainObject(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+  try {
+    const prototype = Object.getPrototypeOf(value);
+    return prototype === Object.prototype || prototype === null;
+  } catch {
+    return false;
+  }
+}
+
+function hasSafeOwnDataProperties(value) {
+  try {
+    if (Object.getOwnPropertySymbols(value).length) return false;
+    for (const key of Object.getOwnPropertyNames(value)) {
+      const descriptor = Object.getOwnPropertyDescriptor(value, key);
+      if (!descriptor || !Object.hasOwn(descriptor, "value")) return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // Recursively collect every string that appears anywhere in the input, both
@@ -133,7 +152,10 @@ export function validateReceipt(input) {
   const errors = [];
 
   if (!isPlainObject(input)) {
-    return { valid: false, errors: ["entry must be a JSON object"], entry: null };
+    return { valid: false, errors: ["entry must be a plain JSON object"], entry: null };
+  }
+  if (!hasSafeOwnDataProperties(input)) {
+    return { valid: false, errors: ["entry must contain only own JSON data properties"], entry: null };
   }
 
   // 1. Structural allow-list: reject any key that is not explicitly permitted.
@@ -169,8 +191,14 @@ export function validateReceipt(input) {
   }
 
   // 3. Defense-in-depth forbidden-content scan over the whole raw input.
-  for (const violation of scanForbidden(input)) {
-    errors.push(violation.message);
+  // Hostile nested objects must fail closed rather than throwing from getters,
+  // proxies, or cyclic/non-JSON structures.
+  try {
+    for (const violation of scanForbidden(input)) {
+      errors.push(violation.message);
+    }
+  } catch {
+    errors.push("entry contains unsafe or non-JSON nested content");
   }
 
   const valid = errors.length === 0;
