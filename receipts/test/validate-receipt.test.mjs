@@ -198,3 +198,17 @@ test("validateJournal rejects a non-array", () => {
   const r = validateJournal({ not: "an array" });
   assert.equal(r.valid, false);
 });
+
+
+test("hostile proxy get traps do not escape validation", () => {
+  const candidate = new Proxy(baseEntry(), {
+    get(target, property, receiver) {
+      if (property === "nonce") throw new Error("hostile get trap");
+      return Reflect.get(target, property, receiver);
+    },
+  });
+  assert.doesNotThrow(() => validateReceipt(candidate));
+  const result = validateReceipt(candidate);
+  assert.equal(result.valid, true);
+  assert.deepEqual(result.entry, baseEntry());
+});
