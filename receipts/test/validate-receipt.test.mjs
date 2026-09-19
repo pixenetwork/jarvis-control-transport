@@ -53,6 +53,42 @@ test("non-object input is rejected", () => {
   }
 });
 
+test("non-plain, symbol-keyed, and accessor-backed entries fail closed without throwing", () => {
+  const inherited = Object.assign(Object.create({ inherited: true }), baseEntry());
+  assert.doesNotThrow(() => validateReceipt(inherited));
+  assert.equal(validateReceipt(inherited).valid, false);
+
+  const symbolKeyed = baseEntry();
+  symbolKeyed[Symbol("token")] = "secret";
+  assert.doesNotThrow(() => validateReceipt(symbolKeyed));
+  assert.equal(validateReceipt(symbolKeyed).valid, false);
+
+  const accessorBacked = baseEntry();
+  Object.defineProperty(accessorBacked, "nonce", {
+    enumerable: true,
+    get() {
+      throw new Error("getter must never execute");
+    },
+  });
+  assert.doesNotThrow(() => validateReceipt(accessorBacked));
+  assert.equal(validateReceipt(accessorBacked).valid, false);
+});
+
+test("hostile nested content is rejected without escaping the validator", () => {
+  const nested = {};
+  Object.defineProperty(nested, "secret", {
+    enumerable: true,
+    get() {
+      throw new Error("nested getter must be contained");
+    },
+  });
+  const candidate = { ...baseEntry(), extra: nested };
+  assert.doesNotThrow(() => validateReceipt(candidate));
+  const result = validateReceipt(candidate);
+  assert.equal(result.valid, false);
+  assert.equal(result.entry, null);
+});
+
 test("unknown top-level field is rejected", () => {
   const r = validateReceipt({ ...baseEntry(), commandId: "jarvis-remote-20260821-4028ec32" });
   assert.equal(r.valid, false);
