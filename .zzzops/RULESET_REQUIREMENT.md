@@ -31,8 +31,13 @@ committed file can change. A repository owner/admin with access to
    name pattern-matching that could also catch v1/v3/v4).
 2. **Preserve or add these rules** on that ruleset, scoped to v2:
    - `deletion` — branch cannot be deleted.
-   - `non_fast_forward` — no force-push / history rewrite.
-   - `update` restricted to fast-forward, non-destructive appends only.
+   - `non_fast_forward` — no force-push / history rewrite; this is the rule
+     that preserves fast-forward-only history.
+   - Do **not** use GitHub's `update` ("Restrict updates") rule as a
+     fast-forward guard. That rule blocks all ref updates for actors without a
+     bypass. If an admin intentionally enables it, the bounded envelope writer
+     must be a narrowly scoped, audited bypass actor and a post-change canary
+     must prove that an authorized append still succeeds.
    - `required_signatures` (or equivalent identity/signing safeguard), if the
      repository's write path supports it.
    - `pull_request` / required-review rule for any writer other than the
@@ -75,4 +80,4 @@ gh api repos/pixenetwork/jarvis-control-transport/git/ref/heads/jarvis-remote-co
 
 Until this file is updated with recorded evidence from the steps above, this
 transport must **not** be treated as production-ready, per issue #24 and the
-source-level fail-closed policy in `README.md` / PR #23.
+source-level fail-closed policy in `README.md` and the surviving canonicalization PR.

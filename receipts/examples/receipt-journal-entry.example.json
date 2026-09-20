@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "phase": "execution-postcheck",
+  "nonce": "00000000000000000000000000000000",
+  "rawHashRef": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "ttlSeconds": 600,
+  "outcome": "success"
+}
