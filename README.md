@@ -17,17 +17,31 @@ A consumer must fail closed unless its configured control ref is exactly `refs/h
 - No GitHub Actions or runners.
 - The Windows host never executes code from this repository.
 - Only JSON command envelopes under `control/remote/commands/` may be appended after the protected v2 control-branch genesis.
-- Private source authority and sanitized receipt journal remain in `pixenetwork/ai-orchestrator`.
+- Private source authority, policy, and the authoritative raw receipts remain in `pixenetwork/ai-orchestrator`.
 - This repository is transport only; it cannot mint actor approval, execution authority, validation authority, reviewer quorum, or receipt authority.
 
-## Ruleset requirement
+## Ruleset requirement (repository-admin action)
 
-Before this transport may be treated as production-ready, repository administration must enforce the canonical branch directly:
-
-1. protection/rulesets target `refs/heads/jarvis-remote-control-v2`;
-2. non-fast-forward/history rewrite and deletion protections remain enabled;
-3. required signing/identity constraints remain enabled where supported;
-4. no unconditional `always` bypass actor may mutate the canonical control branch;
-5. v1/v3/v4 and probe branches must not be accepted by consumers even if they remain in Git for provenance.
+Before this transport may be treated as production-ready, repository administration must enforce the canonical branch directly at the ruleset level. This cannot be done from a pull request; see [`.zzzops/RULESET_REQUIREMENT.md`](.zzzops/RULESET_REQUIREMENT.md) for the exact required configuration, the known-bad current state, and the verification steps a repository admin must perform and record.
 
 Current repository rulesets that target v1 do **not** satisfy this gate. Missing or mismatched v2 enforcement is a fail-closed condition.
+
+## Receipt journal
+
+This repository hosts a **public, sanitized** receipt journal for the Jarvis
+remote-control transport. It records only non-sensitive receipt *metadata* so
+that command outcomes are publicly auditable without ever exposing private
+material.
+
+- The canonical control branch is `jarvis-remote-control-v2`; consumers must fail closed on any other control ref.
+- A journal entry may contain **only** these sanitized fields: `phase`,
+  `nonce`, a raw-hash reference (`rawHashRef`), TTL (`ttlSeconds`), and
+  `outcome`. Nothing else is permitted.
+- **Never** post commands, credentials, tokens, environment data, Host Ops
+  internals, or any other private artifact to this journal. The authoritative
+  raw receipt is held privately in `pixenetwork/ai-orchestrator` and is
+  referenced here only by a one-way hash.
+- Format, schema, the enforcing validator, and the hard constraints are
+  documented in [`receipts/README.md`](receipts/README.md).
+- This repository does not depend on `pixenetwork/ai-orchestrator` being
+  present; the validator is fully self-contained.
