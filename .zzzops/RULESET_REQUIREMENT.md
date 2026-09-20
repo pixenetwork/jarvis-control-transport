@@ -6,7 +6,7 @@ This document is the precise, checkable specification for the repository-level
 ruleset change. It cannot be applied from a pull request: GitHub repository
 rulesets are an admin-only, org/repo settings-level resource, not something a
 committed file can change. A repository owner/admin with access to
-**Settings → Rules → Rulesets** (or the equivalent `PATCH
+**Settings → Rules → Rulesets** (or the equivalent `PUT
 /repos/{owner}/{repo}/rulesets/{ruleset_id}` / `POST
 .../rulesets` admin API call) must perform this change directly.
 
@@ -64,6 +64,31 @@ committed file can change. A repository owner/admin with access to
      that no ruleset targeting the canonical branch grants an `always`
      bypass actor.
 
+## Applied evidence (2026-09-20)
+
+- Exact canonical head at application: `jarvis-remote-control-v2` =
+  `2cdc255a0bdefa00046cb43f7c0b1734a1e2aa32`.
+- Repository ruleset `21129234` is active as
+  `jarvis-remote-control-v2-canonical-immutability`, targets exactly
+  `refs/heads/jarvis-remote-control-v2`, has no bypass actors, and enforces
+  `deletion`, `required_linear_history`, `non_fast_forward`, and
+  `required_signatures`.
+- The legacy v1 writer gate `21129233` is renamed
+  `jarvis-remote-control-v1-writer-gate-retired`, disabled, and has no bypass
+  actors. Its historical `update` rule is therefore not active on the
+  canonical branch.
+- The evaluated rules for the v2 branch return only the four canonical
+  immutability/signing rules above; no `update` / Restrict-updates rule is
+  active on v2.
+- Consumer-side fail-closed behavior was revalidated at exact
+  `pixenetwork/ai-orchestrator` main
+  `a69616f959d1d3a5e74370ccc2e67facdd551460`: the targeted remote-control
+  suite passed 24/24 tests, including v2-only configuration/ref validation and
+  explicit rejection of v1 reintroduction.
+- No command-envelope canary was written to the control branch. The admin
+  correction did not add an `update` rule and therefore avoided introducing a
+  new bypass requirement or a command-looking mutation solely for testing.
+
 ## Verification (run after the admin change, from an account with repo read access)
 
 ```sh
@@ -78,6 +103,6 @@ gh api repos/pixenetwork/jarvis-control-transport/rulesets/<ruleset_id>
 gh api repos/pixenetwork/jarvis-control-transport/git/ref/heads/jarvis-remote-control-v2
 ```
 
-Until this file is updated with recorded evidence from the steps above, this
-transport must **not** be treated as production-ready, per issue #24 and the
-source-level fail-closed policy in `README.md` and the surviving canonicalization PR.
+The repository-admin ruleset gate in issue #24 is satisfied by the evidence
+recorded above. This does not waive any separate Host Ops runtime, receipt,
+identity, or deployment gate.
