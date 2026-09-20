@@ -8,7 +8,7 @@ $InstallDir = 'C:\ProgramData\PixelNetwork\JarvisDesktop\dc-bridge'
 $InInstallDir = $false
 
 function Send-BridgeReceipt {
-  param([hashtable]$Payload)
+  param($Payload)
   try {
     Invoke-RestMethod -Uri $ReceiptHook -Method Post -ContentType 'application/json' -Body ($Payload | ConvertTo-Json -Compress -Depth 12) | Out-Null
   } catch {}
