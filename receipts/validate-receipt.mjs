@@ -127,18 +127,16 @@ function collectStrings(value, out) {
 function scanForbidden(input) {
   const strings = [];
   collectStrings(input, strings);
-  const violations = [];
+  const categories = new Set();
   for (const text of strings) {
     for (const rule of FORBIDDEN_SIGNATURES) {
-      if (rule.pattern.test(text)) {
-        violations.push({
-          category: rule.category,
-          message: `forbidden ${rule.category} content detected`,
-        });
-      }
+      if (rule.pattern.test(text)) categories.add(rule.category);
     }
   }
-  return violations;
+  return [...categories].map((category) => ({
+    category,
+    message: `forbidden ${category} content detected`,
+  }));
 }
 
 /**
