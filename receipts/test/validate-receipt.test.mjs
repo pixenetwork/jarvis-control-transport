@@ -212,3 +212,15 @@ test("hostile proxy get traps do not escape validation", () => {
   assert.equal(result.valid, true);
   assert.deepEqual(result.entry, baseEntry());
 });
+
+
+test("deduplicates repeated forbidden-content categories", () => {
+  const result = validateReceipt({
+    ...baseEntry(),
+    first: "password=one token=two",
+    second: "authorization bearer token",
+  });
+  assert.equal(result.valid, false);
+  const credentialErrors = result.errors.filter((error) => error.includes("credential-or-token"));
+  assert.equal(credentialErrors.length, 1);
+});
