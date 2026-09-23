@@ -22,9 +22,9 @@ A consumer must fail closed unless its configured control ref is exactly `refs/h
 
 ## Ruleset requirement (repository-admin action)
 
-Before this transport may be treated as production-ready, repository administration must enforce the canonical branch directly at the ruleset level. This cannot be done from a pull request; see [`.zzzops/RULESET_REQUIREMENT.md`](.zzzops/RULESET_REQUIREMENT.md) for the exact required configuration, the known-bad current state, and the verification steps a repository admin must perform and record.
+The canonical v2 repository-admin ruleset gate is **satisfied**. The active jarvis-remote-control-v2-canonical-immutability ruleset targets exactly refs/heads/jarvis-remote-control-v2, has no bypass actors, and enforces deletion protection, linear history, non-fast-forward protection, and required signatures. See .zzzops/RULESET_REQUIREMENT.md for the recorded application evidence and verification steps.
 
-Current repository rulesets that target v1 do **not** satisfy this gate. Missing or mismatched v2 enforcement is a fail-closed condition.
+Consumers must still fail closed if canonical-v2 enforcement is later missing or mismatched; this repository does not gain execution or Host Ops authority from the ruleset.
 
 ## Receipt journal
 
