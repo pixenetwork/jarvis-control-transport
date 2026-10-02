@@ -49,6 +49,7 @@ export const NONCE_PATTERN = /^[0-9a-f]{32}$/;
 export const RAW_HASH_REF_PATTERN = /^sha256:[0-9a-f]{64}$/;
 export const TTL_MIN_SECONDS = 1;
 export const TTL_MAX_SECONDS = 86400;
+export const MAX_JOURNAL_ENTRIES = 4096;
 
 // Forbidden-content signatures. These are a secondary, defense-in-depth guard:
 // even though the allowed fields are so tightly format-constrained that private
@@ -223,8 +224,27 @@ export function validateReceipt(input) {
   };
 }
 
+function receiptFingerprint(entry) {
+  return [
+    String(entry.schemaVersion),
+    entry.phase,
+    entry.nonce,
+    entry.rawHashRef,
+    String(entry.ttlSeconds),
+    entry.outcome,
+  ].join("\0");
+}
+
 /**
  * Validate a whole journal: an array of entries.
+ *
+ * Different phases of one nonce are distinct lifecycle receipts. Replaying an
+ * identical receipt is idempotent. A later receipt for the same nonce and
+ * phase that disagrees on any sanitized field fails closed. ttlSeconds is the
+ * envelope window, so it must also agree across phases of one nonce. A journal
+ * longer than MAX_JOURNAL_ENTRIES fails closed. This check does not mint
+ * receipt, actor, execution, or Host Ops authority.
+ *
  * @param {unknown} entries
  * @returns {{ valid: boolean, results: Array<{index:number, valid:boolean, errors:string[]}> }}
  */
@@ -232,9 +252,42 @@ export function validateJournal(entries) {
   if (!Array.isArray(entries)) {
     return { valid: false, results: [{ index: -1, valid: false, errors: ["journal must be a JSON array of entries"] }] };
   }
+  if (entries.length > MAX_JOURNAL_ENTRIES) {
+    return {
+      valid: false,
+      results: [{
+        index: -1,
+        valid: false,
+        errors: ["journal exceeds " + MAX_JOURNAL_ENTRIES + " entries"],
+      }],
+    };
+  }
+  const seenPhase = new Map();
+  const ttlByNonce = new Map();
   const results = entries.map((entry, index) => {
-    const { valid, errors } = validateReceipt(entry);
-    return { index, valid, errors };
+    const { valid, errors, entry: normalized } = validateReceipt(entry);
+    if (!valid || !normalized) return { index, valid, errors };
+    const phaseKey = normalized.nonce + "\0" + normalized.phase;
+    const fingerprint = receiptFingerprint(normalized);
+    const prior = seenPhase.get(phaseKey);
+    if (prior !== undefined && prior !== fingerprint) {
+      return {
+        index,
+        valid: false,
+        errors: ["conflicting receipt for the same nonce and phase"],
+      };
+    }
+    const priorTtl = ttlByNonce.get(normalized.nonce);
+    if (priorTtl !== undefined && priorTtl !== normalized.ttlSeconds) {
+      return {
+        index,
+        valid: false,
+        errors: ["conflicting ttl for the same nonce"],
+      };
+    }
+    if (prior === undefined) seenPhase.set(phaseKey, fingerprint);
+    if (priorTtl === undefined) ttlByNonce.set(normalized.nonce, normalized.ttlSeconds);
+    return { index, valid: true, errors: [] };
   });
   return { valid: results.every((r) => r.valid), results };
 }
