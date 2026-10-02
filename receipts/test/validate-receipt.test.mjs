@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
-import { validateReceipt, validateJournal } from "../validate-receipt.mjs";
+import { validateReceipt, validateJournal, MAX_JOURNAL_ENTRIES } from "../validate-receipt.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoReceipts = join(here, "..");
@@ -223,4 +223,51 @@ test("deduplicates repeated forbidden-content categories", () => {
   assert.equal(result.valid, false);
   const credentialErrors = result.errors.filter((error) => error.includes("credential-or-token"));
   assert.equal(credentialErrors.length, 1);
+});
+
+test("replaying an identical receipt is idempotent", () => {
+  const entry = baseEntry();
+  const result = validateJournal([entry, { ...entry }, { ...entry, phase: "reconcile" }]);
+  assert.equal(result.valid, true);
+  assert.equal(result.results.length, 3);
+  assert.ok(result.results.every((item) => item.valid));
+});
+
+test("a conflicting receipt for the same nonce and phase fails closed", () => {
+  const entry = baseEntry();
+  const conflict = {
+    ...entry,
+    outcome: "failure",
+    rawHashRef: "sha256:" + "b".repeat(64),
+  };
+  const result = validateJournal([entry, conflict]);
+  assert.equal(result.valid, false);
+  assert.equal(result.results[0].valid, true);
+  assert.equal(result.results[1].valid, false);
+  assert.equal(result.results[1].index, 1);
+  assert.deepEqual(result.results[1].errors, ["conflicting receipt for the same nonce and phase"]);
+  assert.equal(JSON.stringify(result).includes(entry.nonce), false);
+  assert.equal(JSON.stringify(result).includes(entry.rawHashRef), false);
+});
+
+test("ttl must agree across phases of one nonce", () => {
+  const entry = baseEntry();
+  const later = { ...entry, phase: "expiry", outcome: "expired", ttlSeconds: entry.ttlSeconds + 1 };
+  const result = validateJournal([entry, later]);
+  assert.equal(result.valid, false);
+  assert.equal(result.results[0].valid, true);
+  assert.deepEqual(result.results[1].errors, ["conflicting ttl for the same nonce"]);
+  assert.equal(JSON.stringify(result).includes(entry.nonce), false);
+});
+
+test("journal longer than the recovery bound fails closed", () => {
+  const entry = baseEntry();
+  const bounded = validateJournal(Array.from({ length: MAX_JOURNAL_ENTRIES }, () => ({ ...entry })));
+  assert.equal(bounded.valid, true);
+
+  const overflow = validateJournal(Array.from({ length: MAX_JOURNAL_ENTRIES + 1 }, () => ({ ...entry })));
+  assert.equal(overflow.valid, false);
+  assert.equal(overflow.results.length, 1);
+  assert.equal(overflow.results[0].index, -1);
+  assert.equal(JSON.stringify(overflow).includes(entry.nonce), false);
 });
