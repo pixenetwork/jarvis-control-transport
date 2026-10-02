@@ -5,8 +5,8 @@
   "type": "module",
   "description": "Public, non-executable transport for bounded Jarvis Host Ops command envelopes and their sanitized public receipt journal.",
   "scripts": {
-    "check": "node --check receipts/validate-receipt.mjs && node --check receipts/test/validate-receipt.test.mjs",
-    "test": "node --test --test-reporter=spec \"receipts/test/**/*.test.mjs\""
+    "check": "node --check receipts/validate-receipt.mjs && node --check receipts/test/validate-receipt.test.mjs && node --check transport/admit-binding.mjs && node --check transport/test/admit-binding.test.mjs",
+    "test": "node --test --test-reporter=spec \"receipts/test/**/*.test.mjs\" \"transport/test/**/*.test.mjs\""
   },
   "engines": {
     "node": ">=20"

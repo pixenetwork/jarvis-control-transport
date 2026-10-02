@@ -20,6 +20,10 @@ A consumer must fail closed unless its configured control ref is exactly `refs/h
 - Private source authority, policy, and the authoritative raw receipts remain in `pixenetwork/ai-orchestrator`.
 - This repository is transport only; it cannot mint actor approval, execution authority, validation authority, reviewer quorum, or receipt authority.
 
+## Admission binding
+
+`transport/admit-binding.mjs` fails closed unless a candidate's control ref is exactly `refs/heads/jarvis-remote-control-v2`, its observed head equals the caller-supplied expected head, its actor equals the caller-supplied expected actor, `now` falls in the half-open `[issuedAt, issuedAt + ttlSeconds)` window, and its nonce is absent from the caller-supplied replay set. The check reuses the receipt nonce and TTL bounds. It does not mint actor, execution, receipt, or Host Ops authority.
+
 ## Ruleset requirement (repository-admin action)
 
 The canonical v2 repository-admin ruleset gate is **satisfied**. The active jarvis-remote-control-v2-canonical-immutability ruleset targets exactly refs/heads/jarvis-remote-control-v2, has no bypass actors, and enforces deletion protection, linear history, non-fast-forward protection, and required signatures. See .zzzops/RULESET_REQUIREMENT.md for the recorded application evidence and verification steps.
