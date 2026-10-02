@@ -10,6 +10,8 @@ import {
   NONCE_PATTERN,
   TTL_MAX_SECONDS,
   TTL_MIN_SECONDS,
+  isPlainObject,
+  snapshotSafeOwnDataProperties,
 } from "../receipts/validate-receipt.mjs";
 
 export const CANONICAL_CONTROL_REF = "refs/heads/jarvis-remote-control-v2";
@@ -32,31 +34,6 @@ const ALLOWED_KEYS = Object.freeze([
   "seenNonces",
 ]);
 
-function isPlainObject(value) {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
-  try {
-    const prototype = Object.getPrototypeOf(value);
-    return prototype === Object.prototype || prototype === null;
-  } catch {
-    return false;
-  }
-}
-
-function snapshotSafeOwnDataProperties(value) {
-  try {
-    if (Object.getOwnPropertySymbols(value).length) return null;
-    const snapshot = Object.create(null);
-    const keys = Object.getOwnPropertyNames(value);
-    for (const key of keys) {
-      const descriptor = Object.getOwnPropertyDescriptor(value, key);
-      if (!descriptor || !Object.hasOwn(descriptor, "value")) return null;
-      snapshot[key] = descriptor.value;
-    }
-    return { snapshot, keys };
-  } catch {
-    return null;
-  }
-}
 
 function isWholeTime(value) {
   return Number.isSafeInteger(value) && value >= ISSUED_AT_MIN && value <= ISSUED_AT_MAX;
