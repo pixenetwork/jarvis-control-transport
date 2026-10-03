@@ -49,6 +49,9 @@ function isWholeTime(value) {
  * @returns {{ valid: boolean, errors: string[], binding: object|null }}
  */
 export function admitTransportBinding(input) {
+  if (utilTypes.isProxy(input)) {
+    return { valid: false, errors: ["malformed"], binding: null };
+  }
   let inputIsPlain = false;
   try {
     inputIsPlain = isPlainObject(input);

@@ -208,6 +208,20 @@ test("revoked proxy inputs fail closed without throwing", () => {
   assert.doesNotThrow(() => admitTransportBinding(proxy));
   assert.deepEqual(admitTransportBinding(proxy), { valid: false, errors: ["malformed"], binding: null });
 });
+test("top-level proxy candidates fail closed before descriptor snapshotting", () => {
+  const target = candidate({ seenNonces: [NONCE] });
+  const proxy = new Proxy(target, {
+    getOwnPropertyDescriptor(object, property) {
+      if (property === "seenNonces") {
+        return { value: [], writable: true, enumerable: true, configurable: true };
+      }
+      return Reflect.getOwnPropertyDescriptor(object, property);
+    },
+  });
+  const result = admitTransportBinding(proxy);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.includes("malformed"));
+});
 test("rejected candidates never echo the replay set", () => {
   const result = admitTransportBinding(candidate({ seenNonces: [NONCE], actor: "someone-else" }));
   assert.equal(result.valid, false);
