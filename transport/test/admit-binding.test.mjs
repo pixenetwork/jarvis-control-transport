@@ -188,6 +188,26 @@ test("replay-set accessors and proxies fail closed without throwing", () => {
   assert.doesNotThrow(() => admitTransportBinding(candidate({ seenNonces: proxied })));
   assert.ok(admitTransportBinding(candidate({ seenNonces: proxied })).errors.includes("malformed"));
 });
+test("proxy replay sets cannot underreport length", () => {
+  const replaySet = new Proxy([NONCE], {
+    getOwnPropertyDescriptor(target, property) {
+      if (property === "length") {
+        return { value: 0, writable: true, enumerable: false, configurable: false };
+      }
+      return Reflect.getOwnPropertyDescriptor(target, property);
+    },
+  });
+  const result = admitTransportBinding(candidate({ seenNonces: replaySet }));
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.includes("malformed"));
+});
+
+test("revoked proxy inputs fail closed without throwing", () => {
+  const { proxy, revoke } = Proxy.revocable(candidate(), {});
+  revoke();
+  assert.doesNotThrow(() => admitTransportBinding(proxy));
+  assert.deepEqual(admitTransportBinding(proxy), { valid: false, errors: ["malformed"], binding: null });
+});
 test("rejected candidates never echo the replay set", () => {
   const result = admitTransportBinding(candidate({ seenNonces: [NONCE], actor: "someone-else" }));
   assert.equal(result.valid, false);

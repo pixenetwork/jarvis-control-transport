@@ -1,3 +1,5 @@
+import { types as utilTypes } from "node:util";
+
 // Fail-closed admission for a public transport candidate.
 //
 // This module does not mint actor approval, execution authority, validation
@@ -47,7 +49,13 @@ function isWholeTime(value) {
  * @returns {{ valid: boolean, errors: string[], binding: object|null }}
  */
 export function admitTransportBinding(input) {
-  if (!isPlainObject(input)) {
+  let inputIsPlain = false;
+  try {
+    inputIsPlain = isPlainObject(input);
+  } catch {
+    inputIsPlain = false;
+  }
+  if (!inputIsPlain) {
     return { valid: false, errors: ["malformed"], binding: null };
   }
   const safe = snapshotSafeOwnDataProperties(input);
@@ -115,7 +123,7 @@ export function admitTransportBinding(input) {
   const seen = candidate.seenNonces;
   let seenSnapshot = null;
   try {
-    if (Array.isArray(seen)) {
+    if (Array.isArray(seen) && !utilTypes.isProxy(seen)) {
       const lengthDescriptor = Object.getOwnPropertyDescriptor(seen, "length");
       const length = lengthDescriptor?.value;
       if (Number.isSafeInteger(length) && length >= 0 && length <= MAX_SEEN_NONCES) {
