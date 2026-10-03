@@ -111,21 +111,38 @@ export function admitTransportBinding(input) {
 
   const nonceWellFormed = typeof candidate.nonce === "string" && NONCE_PATTERN.test(candidate.nonce);
   const seen = candidate.seenNonces;
-  let seenWellFormed = Array.isArray(seen) && seen.length <= MAX_SEEN_NONCES;
-  if (seenWellFormed) {
-    for (const prior of seen) {
-      if (typeof prior !== "string" || !NONCE_PATTERN.test(prior)) {
-        seenWellFormed = false;
-        break;
+  let seenSnapshot = null;
+  try {
+    if (Array.isArray(seen)) {
+      const lengthDescriptor = Object.getOwnPropertyDescriptor(seen, "length");
+      const length = lengthDescriptor?.value;
+      if (Number.isSafeInteger(length) && length >= 0 && length <= MAX_SEEN_NONCES) {
+        const snapshot = [];
+        let wellFormed = true;
+        for (let index = 0; index < length; index += 1) {
+          const descriptor = Object.getOwnPropertyDescriptor(seen, String(index));
+          if (!descriptor || !Object.hasOwn(descriptor, "value")) {
+            wellFormed = false;
+            break;
+          }
+          const prior = descriptor.value;
+          if (typeof prior !== "string" || !NONCE_PATTERN.test(prior)) {
+            wellFormed = false;
+            break;
+          }
+          snapshot.push(prior);
+        }
+        if (wellFormed) seenSnapshot = snapshot;
       }
     }
+  } catch {
+    seenSnapshot = null;
   }
-  if (!nonceWellFormed || !seenWellFormed) {
+  if (!nonceWellFormed || !seenSnapshot) {
     errors.push("malformed");
-  } else if (seen.includes(candidate.nonce)) {
+  } else if (Array.prototype.includes.call(seenSnapshot, candidate.nonce)) {
     errors.push("replay");
   }
-
   const valid = errors.length === 0;
   return {
     valid,

@@ -160,6 +160,34 @@ test("hostile getters and symbol keys do not escape admission", () => {
   assert.equal(admitTransportBinding(symbolKeyed).valid, false);
 });
 
+test("replay detection ignores an overridden array includes method", () => {
+  const seenNonces = [NONCE];
+  seenNonces.includes = () => false;
+
+  const result = admitTransportBinding(candidate({ seenNonces }));
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.includes("replay"));
+});
+
+test("replay-set accessors and proxies fail closed without throwing", () => {
+  const accessor = [OTHER];
+  Object.defineProperty(accessor, "0", {
+    enumerable: true,
+    get() {
+      throw new Error("replay getter must never execute");
+    },
+  });
+  assert.doesNotThrow(() => admitTransportBinding(candidate({ seenNonces: accessor })));
+  assert.ok(admitTransportBinding(candidate({ seenNonces: accessor })).errors.includes("malformed"));
+
+  const proxied = new Proxy([OTHER], {
+    getOwnPropertyDescriptor() {
+      throw new Error("descriptor trap");
+    },
+  });
+  assert.doesNotThrow(() => admitTransportBinding(candidate({ seenNonces: proxied })));
+  assert.ok(admitTransportBinding(candidate({ seenNonces: proxied })).errors.includes("malformed"));
+});
 test("rejected candidates never echo the replay set", () => {
   const result = admitTransportBinding(candidate({ seenNonces: [NONCE], actor: "someone-else" }));
   assert.equal(result.valid, false);
