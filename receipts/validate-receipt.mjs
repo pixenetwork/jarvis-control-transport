@@ -82,7 +82,7 @@ export const FORBIDDEN_SIGNATURES = Object.freeze([
   { category: "private-artifact", pattern: /\b[A-Za-z0-9_.-]+\.(mjs|js|ts|ps1|bat|cmd|sh|env|pem|key|sql)\b/i },
 ]);
 
-function isPlainObject(value) {
+export function isPlainObject(value) {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
   try {
     const prototype = Object.getPrototypeOf(value);
@@ -92,7 +92,7 @@ function isPlainObject(value) {
   }
 }
 
-function snapshotSafeOwnDataProperties(value) {
+export function snapshotSafeOwnDataProperties(value) {
   try {
     if (Object.getOwnPropertySymbols(value).length) return null;
     const snapshot = Object.create(null);
