@@ -102,9 +102,11 @@ export function admitTransportBinding(input) {
   const timesWellFormed = isWholeTime(candidate.issuedAt) && isWholeTime(candidate.now);
   if (!ttlWellFormed || !timesWellFormed) {
     errors.push("malformed");
+  } else if (candidate.issuedAt > Number.MAX_SAFE_INTEGER - candidate.ttlSeconds) {
+    errors.push("malformed");
   } else {
     const expiresAt = candidate.issuedAt + candidate.ttlSeconds;
-    if (!Number.isSafeInteger(expiresAt) || candidate.now < candidate.issuedAt || candidate.now >= expiresAt) {
+    if (candidate.now < candidate.issuedAt || candidate.now >= expiresAt) {
       errors.push("expiry");
     }
   }
